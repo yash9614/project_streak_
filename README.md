@@ -20,20 +20,20 @@ Built as a practical learning path from simple tools → embeddings → tool-cal
 
 ```mermaid
 flowchart TB
-    User[\"User\"] --> Streamlit[\"Streamlit UI<br/>(app.py)\"]
-    User --> FastAPI[\"FastAPI<br/>(backend.py :8001)\"]
+    User[User] --> Streamlit[Streamlit UI<br/>app.py]
+    User --> FastAPI[FastAPI<br/>backend.py :8001]
     
-    Streamlit --> AgentLoop[\"Tool-calling Loop\"]
-    FastAPI --> MCPClient[\"MCP Client\"]
+    Streamlit --> AgentLoop[Tool-calling Loop]
+    FastAPI --> MCPClient[MCP Client]
     
-    AgentLoop --> Tools[\"Tools\"]
-    AgentLoop --> RAG[\"RAG Retriever\"]
+    AgentLoop --> Tools[Tools]
+    AgentLoop --> RAG[RAG Retriever]
     
-    MCPClient --> MCPServer[\"MCP Server<br/>(mcp_server.py :8000)\"]
+    MCPClient --> MCPServer[MCP Server<br/>mcp_server.py :8000]
     MCPServer --> Tools
     MCPServer --> RAG
     
-    RAG --> Chroma[(\"ChromaDB<br/>chroma_db/\")]
+    RAG --> Chroma[(ChromaDB<br/>chroma_db)]
     Tools --> AgentLoop
     RAG --> AgentLoop
     MCPServer --> MCPClient
@@ -42,14 +42,14 @@ flowchart TB
 ```mermaid
 flowchart LR
     subgraph knowledge [Knowledge Base]
-        Docs[\"knowledge/*.md\"]
+        Docs[knowledge/*.md]
     end
-    Docs --> Ingest[\"ingestion.py\"]
-    Ingest --> Embed[\"OpenAI Embeddings\"]
-    Embed --> Chroma[(\"ChromaDB\")]
-    Query[\"User Query\"] --> Retriever[\"retriever.py\"]
+    Docs --> Ingest[ingestion.py]
+    Ingest --> Embed[OpenAI Embeddings]
+    Embed --> Chroma[(ChromaDB)]
+    Query[User Query] --> Retriever[retriever.py]
     Retriever --> Chroma
-    Chroma --> Snippets[\"Relevant Snippets\"]
+    Chroma --> Snippets[Relevant Snippets]
 ```
 
 ## Project Structure
