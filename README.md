@@ -1,8 +1,8 @@
-# Project Streak — AI Travel Assistant
+# Project Streak — RAG + MCP + FastAPI Agent
 
-A Streamlit chat app that gathers travel preferences conversationally, then generates a structured day-by-day itinerary on demand.
+A progressive GenAI project that combines conversational chat, tool calling, vector RAG, MCP server, and a FastAPI backend.
 
-Built as a practical GenAI project: conversational memory + Pydantic structured outputs + clean UI.
+Built as a practical learning path from simple tools → embeddings → tool-calling loop → MCP → FastAPI.
 
 ## Stack
 
@@ -10,87 +10,104 @@ Built as a practical GenAI project: conversational memory + Pydantic structured 
 |-------|--------|
 | UI | Streamlit |
 | LLM | OpenAI (`gpt-4o-mini`) |
-| Structured output | Pydantic + OpenAI `.parse()` |
+| Embeddings | `text-embedding-3-small` |
+| Vector DB | ChromaDB (persistent) |
+| MCP | MCP 2.x (streamable HTTP) |
+| Backend | FastAPI + Uvicorn |
 | Config | `python-dotenv` |
 
-## How it works
-
-1. User chats freely (destination, days, budget, interests).
-2. Chat history is kept in Streamlit session state.
-3. When ready, user clicks **Generate Final Itinerary**.
-4. The full transcript is sent once and returned as a typed `TravelItinerary`.
-5. Results are rendered as expanders, not raw JSON.
-
-```mermaid
-flowchart LR
-    User["User"] --> Chat["Chat Input"]
-    Chat --> Memory["Session State<br/>chat history"]
-    Memory --> Button["Generate Final Itinerary"]
-    Button --> LLM["OpenAI<br/>gpt-4o-mini"]
-    LLM --> Schema["TravelItinerary<br/>Pydantic"]
-    Schema --> UI["Pretty Display<br/>expanders + budget"]
-```
+## Architecture
 
 ```mermaid
 flowchart TB
-    subgraph skills ["Skills practiced"]
-        A["Conversational memory"]
-        B["Structured outputs"]
-        C["Session state"]
-        D["Separation of chat vs final deliverable"]
-        E["Error handling in UI"]
-    end
+    User[\"User\"] --> Streamlit[\"Streamlit UI<br/>(app.py)\"]
+    User --> FastAPI[\"FastAPI<br/>(backend.py :8001)\"]
+    
+    Streamlit --> AgentLoop[\"Tool-calling Loop\"]
+    FastAPI --> MCPClient[\"MCP Client\"]
+    
+    AgentLoop --> Tools[\"Tools\"]
+    AgentLoop --> RAG[\"RAG Retriever\"]
+    
+    MCPClient --> MCPServer[\"MCP Server<br/>(mcp_server.py :8000)\"]
+    MCPServer --> Tools
+    MCPServer --> RAG
+    
+    RAG --> Chroma[(\"ChromaDB<br/>chroma_db/\")]
+    Tools --> AgentLoop
+    RAG --> AgentLoop
+    MCPServer --> MCPClient
 ```
 
-## Project structure
+```mermaid
+flowchart LR
+    subgraph knowledge [Knowledge Base]
+        Docs[\"knowledge/*.md\"]
+    end
+    Docs --> Ingest[\"ingestion.py\"]
+    Ingest --> Embed[\"OpenAI Embeddings\"]
+    Embed --> Chroma[(\"ChromaDB\")]
+    Query[\"User Query\"] --> Retriever[\"retriever.py\"]
+    Retriever --> Chroma
+    Chroma --> Snippets[\"Relevant Snippets\"]
+```
+
+## Project Structure
 
 ```
 .
-├── app.py              # Streamlit UI + chat + button
-├── llm.py              # OpenAI client + structured generation
-├── models.py           # Pydantic schemas
+├── app.py                  # Streamlit UI + tool-calling loop
+├── backend.py              # FastAPI that talks to MCP server
+├── mcp_server.py           # MCP server (streamable HTTP)
+├── tools.py                # Tool functions + OpenAI schemas
+├── rag/
+│   ├── embeddings.py
+│   ├── vectorstore.py      # ChromaDB client
+│   ├── ingestion.py
+│   └── retriever.py
+├── knowledge/
+│   └── sample-faq.md
 ├── requirements.txt
 ├── .env.example
+├── concepts.md             # Concepts + interview questions
 └── README.md
 ```
 
-## Quick start
+## Quick Start
 
-```bash
-# Activate your existing venv (or create one)
-# Then:
+```powershell
+# Create venv (uv recommended)
+uv venv
+.\.venv\Scripts\Activate.ps1
 uv pip install -r requirements.txt
 
-# Copy and edit
 copy .env.example .env
-# Add your OPENAI_API_KEY
+# Add OPENAI_API_KEY and CHROMA_OPENAI_API_KEY
 
+# Terminal 1 — MCP server
+python mcp_server.py
+
+# Terminal 2 — FastAPI
+uvicorn backend:app --reload --port 8001
+
+# Terminal 3 — Streamlit (optional)
 streamlit run app.py
 ```
 
-## Example conversation
+## Test the API
 
-```
-User: I want a 4-day trip to Kyoto in November. Love temples and food. Budget around $1500.
-Assistant: Great. Any must-see places or dietary preferences?
-User: No dietary restrictions. Prefer quieter spots in the evenings.
-[Click Generate Final Itinerary]
+```powershell
+irm -Method Post -Uri "http://127.0.0.1:8001/chat" -ContentType "application/json" -Body '{"message": "What is today date and any Kyoto tips?"}'
 ```
 
-## Schema
+## Skills practiced
 
-| Model | Fields |
-|-------|--------|
-| `Activity` | time, title, description, estimated_cost_usd |
-| `DayPlan` | day, title, activities |
-| `TravelItinerary` | destination, duration_days, total_estimated_budget_usd, summary, days, tips |
-
-## Why this design
-
-- Chat stays cheap and fast.
-- Structured generation runs only when the user is ready.
-- Output is typed and easy to render or export later.
-- Easy to extend (weather tool, budget loop, multi-agent, PDF export).
+- Conversational memory
+- Structured tool calling (OpenAI tools)
+- Vector RAG with ChromaDB
+- MCP server (streamable HTTP)
+- MCP client inside FastAPI
+- Separation of UI / API / MCP layers
 
 ## Author
 
