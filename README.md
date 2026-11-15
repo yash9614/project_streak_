@@ -1,138 +1,68 @@
-# Project Streak — Travel Planning Agent (RAG + MCP + FastAPI)
+# Project Streak
 
-A travel assistant that gathers preferences, calls tools, and retrieves destination knowledge to produce grounded itinerary advice.
+A collection of beginner-to-intermediate Generative AI projects built while learning RAG, agents, and tool-calling.
 
-## Problem
+## Projects
 
-Users want quick, accurate travel help (dates, rough costs, destination tips) without searching multiple sites. This agent combines structured tools with a small knowledge base so answers are both actionable and grounded.
+| # | Project | Description | Stack |
+|---|---------|-------------|-------|
+| 00 | [Travel Planning Agent](./projects/00-travel-planning-agent) | Preference gathering + tools + RAG for grounded itinerary advice. Dual path: direct Streamlit and MCP-backed FastAPI. | Streamlit, FastAPI, MCP, OpenAI, ChromaDB |
+| 01 | [Knowledge Intelligence System](./projects/01-knowledge-intelligence-system) | Upload PDFs/TXT and chat with them using RAG. | Streamlit, LangChain, ChromaDB, OpenAI |
 
-## Stack
-
-| Layer | Choice |
-|-------|--------|
-| UI | Streamlit |
-| LLM | OpenAI (`gpt-4o-mini`) |
-| Embeddings | `text-embedding-3-small` |
-| Vector DB | ChromaDB (persistent local) |
-| MCP | MCP 2.x (streamable HTTP) |
-| Backend | FastAPI + Uvicorn |
-| Config | `python-dotenv` |
-
-## Architecture
+## Architecture Overview
 
 ```mermaid
 flowchart TB
-    User[User] --> Streamlit[Streamlit UI]
-    User --> FastAPI[FastAPI :8001]
-    
-    Streamlit --> LLM1[OpenAI LLM]
-    FastAPI --> LLM2[OpenAI LLM]
-    
-    LLM1 --> Tools[Tools]
-    LLM1 --> RAG[RAG Retriever]
-    
-    LLM2 --> MCPClient[MCP Client]
-    MCPClient --> MCPServer[MCP Server :8000]
-    MCPServer --> Tools
-    MCPServer --> RAG
-    
-    RAG --> Chroma[(ChromaDB)]
-```
+    subgraph Repo["Project Streak"]
+        direction TB
 
-**Two paths (deliberate):**
-- Streamlit calls tools and RAG directly for fast local iteration.
-- FastAPI goes through the MCP server so the same tools can be reused by other clients.
+        subgraph Travel["00 — Travel Planning Agent"]
+            U1[User] --> S1[Streamlit UI]
+            U1 --> F1[FastAPI :8001]
+            S1 --> L1[OpenAI LLM]
+            F1 --> MC[MCP Client]
+            MC --> MS[MCP Server :8000]
+            L1 --> T1[Tools]
+            L1 --> R1[RAG Retriever]
+            MS --> T1
+            MS --> R1
+            R1 --> C1[(ChromaDB)]
+        end
 
-## Design decisions and tradeoffs
-
-- **MCP between FastAPI and tools** — keeps tool definitions in one place and makes the agent callable from any MCP client later.
-- **Streamlit bypasses MCP** — simpler for local development; the tool implementations stay identical.
-- **ChromaDB local** — zero infra for demos; swap for Qdrant/Pinecone later without changing retrieval code.
-- **Stateless `/chat`** — client sends history; no server-side session store yet.
-- **Simple chunking** — one document per file; easy to extend with overlap later.
-
-## Example
-
-**Request**
-```json
-{"message": "What is today date and any Kyoto tips?"}
-```
-
-**Response**
-```json
-{
-  "reply": "Today's date is Saturday, 31 October 2026. For Kyoto: visit temples early morning to avoid crowds, and note that many restaurants close 3-5 PM.",
-  "tool_calls": ["get_current_date_tool", "search_knowledge_base_tool"]
-}
+        subgraph KIS["01 — Knowledge Intelligence System"]
+            U2[User] --> S2[Streamlit UI]
+            S2 --> Up[Document Upload]
+            Up --> R2[RAG Pipeline]
+            R2 --> C2[(ChromaDB)]
+            R2 --> L2[OpenAI LLM]
+        end
+    end
 ```
 
 ## Project Structure
 
 ```
 .
-├── app.py                  # Streamlit UI (direct tools + RAG)
-├── backend.py              # FastAPI (MCP client)
-├── mcp_server.py           # MCP server (streamable HTTP)
-├── tools.py                # Shared tool implementations
-├── rag/
-│   ├── vectorstore.py
-│   ├── ingestion.py
-│   └── retriever.py
-├── knowledge/
-│   └── sample-faq.md
-├── docs/
-│   └── concepts.md         # Design notes + interview questions
-├── requirements.txt
+├── README.md
+├── .gitignore
 ├── .env.example
-└── README.md
+└── projects/
+    ├── 00-travel-planning-agent/      # RAG + MCP + FastAPI travel agent
+    │   ├── app.py
+    │   ├── backend.py
+    │   ├── mcp_server.py
+    │   ├── tools.py
+    │   ├── llm.py
+    │   ├── models.py
+    │   ├── rag/
+    │   ├── knowledge/
+    │   ├── requirements.txt
+    │   └── README.md
+    └── 01-knowledge-intelligence-system/   # Document Q&A RAG
+        ├── app.py
+        ├── requirements.txt
+        └── README.md
 ```
-
-## Quick Start
-
-```bash
-# Windows (PowerShell)
-uv venv
-.\.venv\Scripts\Activate.ps1
-uv pip install -r requirements.txt
-copy .env.example .env
-
-# macOS / Linux
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
-cp .env.example .env
-```
-
-Edit `.env` and set `OPENAI_API_KEY` (also used as `CHROMA_OPENAI_API_KEY`).
-
-```bash
-# Terminal 1
-python mcp_server.py
-
-# Terminal 2
-uvicorn backend:app --reload --port 8001
-
-# Terminal 3 (optional)
-streamlit run app.py
-```
-
-## Test
-
-```bash
-# PowerShell
-irm -Method Post -Uri "http://127.0.0.1:8001/chat" -ContentType "application/json" -Body '{"message": "What is today date and any Kyoto tips?"}'
-
-# curl
-curl -X POST http://127.0.0.1:8001/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is today date and any Kyoto tips?"}'
-```
-
-## Notes
-
-- Retrieval: top-k=3, one chunk per file, sources returned in tool output.
-- `/chat` is stateless; pass history if needed.
-- No auth, logging, or Docker yet (easy next steps).
 
 ## Author
 

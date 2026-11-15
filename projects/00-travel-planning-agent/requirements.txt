@@ -1,0 +1,9 @@
+openai
+streamlit
+chromadb
+pydantic
+python-dotenv
+tiktoken
+mcp
+fastapi
+uvicorn
