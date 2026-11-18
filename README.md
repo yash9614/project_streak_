@@ -8,6 +8,7 @@ A collection of beginner-to-intermediate Generative AI projects built while lear
 |---|---------|-------------|-------|
 | 00 | [Travel Planning Agent](./projects/00-travel-planning-agent) | Preference gathering + tools + RAG for grounded itinerary advice. Dual path: direct Streamlit and MCP-backed FastAPI. | Streamlit, FastAPI, MCP, OpenAI, ChromaDB |
 | 01 | [Knowledge Intelligence System](./projects/01-knowledge-intelligence-system) | Upload PDFs/TXT and chat with them using RAG. | Streamlit, LangChain, ChromaDB, OpenAI |
+| 02 | [E-commerce Assistant](./projects/02-ecommerce-assistant) | Multi-route chatbot: small-talk, FAQ RAG, and text-to-SQL product queries. | Streamlit, OpenAI, semantic-router, ChromaDB, SQLite |
 
 ## Architecture Overview
 
@@ -36,6 +37,19 @@ flowchart TB
             R2 --> C2[(ChromaDB)]
             R2 --> L2[OpenAI LLM]
         end
+
+        subgraph Ecom["02 — E-commerce Assistant"]
+            U3[User] --> S3[Streamlit Chat]
+            S3 --> Router[Semantic Router]
+            Router -->|small-talk| ST[Small-talk Handler]
+            Router -->|faq| FAQ[FAQ RAG]
+            Router -->|sql| SQL[Text-to-SQL]
+            FAQ --> C3[(ChromaDB)]
+            SQL --> DB[(SQLite)]
+            ST --> L3[OpenAI]
+            FAQ --> L3
+            SQL --> L3
+        end
     end
 ```
 
@@ -58,8 +72,18 @@ flowchart TB
     │   ├── knowledge/
     │   ├── requirements.txt
     │   └── README.md
-    └── 01-knowledge-intelligence-system/   # Document Q&A RAG
-        ├── app.py
+    ├── 01-knowledge-intelligence-system/   # Document Q&A RAG
+    │   ├── app.py
+    │   ├── requirements.txt
+    │   └── README.md
+    └── 02-ecommerce-assistant/          # Multi-route chatbot (FAQ + SQL + small-talk)
+        ├── app/
+        │   ├── main.py
+        │   ├── ask.py
+        │   ├── router.py
+        │   ├── faq.py
+        │   ├── sql.py
+        │   └── smalltalk.py
         ├── requirements.txt
         └── README.md
 ```
