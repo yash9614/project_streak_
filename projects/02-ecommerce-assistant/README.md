@@ -2,49 +2,47 @@
 
 Multi-route chatbot that handles:
 
-- Small-talk
-- FAQ (RAG with Chroma)
-- Product questions (text-to-SQL on SQLite)
+- **Small-talk** — direct conversational responses
+- **FAQ** — RAG over product policies using ChromaDB
+- **Product queries** — text-to-SQL against a local SQLite database
 
-Built with OpenAI, semantic-router, ChromaDB, and Streamlit.
+Built with OpenAI, semantic-router, ChromaDB, SQLite, and Streamlit.
 
-## Run
+## Features
 
-```bash
-# Activate the shared venv, then:
-streamlit run app/main.py
+- Semantic routing between three intents
+- Persistent Chroma collection for FAQs
+- Text-to-SQL generation + execution + natural language answer
+- Streamlit chat UI with session history
+
+## Run locally
+
+1. Copy `.env.example` to `.env` and add your OpenAI key:
+   ```
+   OPENAI_API_KEY=sk-...
+   OPENAI_MODEL=gpt-4o-mini
+   ```
+
+2. Install dependencies (or use an existing venv that already has them):
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Start the app:
+   ```bash
+   streamlit run app/main.py
+   ```
+
+## Project layout
+
 ```
-Requires .env with OPENAI_API_KEY and OPENAI_MODEL.
-
-```text
-
-### 3. Git steps (run these in PowerShell)
-
-```powershell
-# 1. Clone the repo (if you don’t already have it)
-cd D:\9011_py_project\llm_projects_folder
-git clone https://github.com/yash9614/project_streak_.git
-cd project_streak_
-
-# 2. Create the new project folder
-mkdir projects\02-ecommerce-assistant
-
-# 3. Copy your finished project into it
-# (adjust source path if needed)
-Copy-Item -Path "D:\9011_py_project\llm_projects_folder\GenAI_Exercise6 E-commerce Tool-Chatbot\*" -Destination "projects\02-ecommerce-assistant" -Recurse -Force
-
-# 4. Add the two files we just created (requirements.txt + README.md)
-# Make sure they are inside projects\02-ecommerce-assistant\
-
-# 5. Update the main README (optional but recommended)
-# Open README.md and add a new row in the projects table for 02.
-
-# 6. Stage, commit, push
-git add projects/02-ecommerce-assistant
-git status   # verify only the new folder is staged
-git commit -m "Add 02-ecommerce-assistant (semantic router + FAQ RAG + text-to-SQL)"
-git push origin main
+app/
+├── main.py          # Streamlit UI
+├── ask.py           # Central dispatcher
+├── router.py        # Semantic router
+├── faq.py           # FAQ RAG chain
+├── sql.py           # Text-to-SQL chain
+└── smalltalk.py     # Small-talk handler
 ```
-mportant
-Do not copy the .venv or any __pycache__ folders.
-Keep your .env out of the commit (it should already be in .gitignore).
+
+Note: Test scripts used during development were intentionally not committed.
